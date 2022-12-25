@@ -12,9 +12,11 @@ if __name__ == "__main__":
     center_dir = "D:/Code/Pics/center.png"
     pic_arranger = PictureArranger()
     for dir in pic_dirs:
-        pic = Picture(dir)
+        pic = Picture()
+        pic.load_image(dir)
         pic_arranger.add_picture(pic)
-    center_pic = Picture(center_dir)
+    center_pic = Picture()
+    center_pic.load_image(center_dir)
     pic_arranger.set_mid_pic(center_pic)
     pic_arranger.set_output_width(1024)
     pic_arranger.generate_image()

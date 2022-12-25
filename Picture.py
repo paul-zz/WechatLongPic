@@ -2,19 +2,27 @@ import os
 from PIL import Image
 
 class Picture:
-    def __init__(self, file_dir : str):
+    def __init__(self):
         # The file directory to store the picture
-        self.file_dir = file_dir
+        self.file_dir = None
         # The name of the picture, by default its filename
-        self.pic_name = file_dir.split(os.sep)[-1]
+        self.pic_name = None
         # The pil image
+        self.pil_image = None
+        self.width = 0
+        self.height = 0
+    
+    def load_image(self, file_dir : str):
+        self.file_dir = file_dir
         self.pil_image = Image.open(self.file_dir)
         self.width = self.pil_image.width
         self.height = self.pil_image.height
-    
+
     def rescale(self, new_width : int=0, new_height : int=0, fake_rescale=False):
         # Rescale the picture
         # if fake_rescale equals to True, only return the rescaled size without scaling
+        if self.pil_image == None:
+            raise FileNotFoundError("Image file not found or not loaded.")
         if new_width != 0 and new_height == 0:
             # Keep the original aspect ratio and calculate new_height automatically
             new_height = int(self.height/self.width*new_width)
