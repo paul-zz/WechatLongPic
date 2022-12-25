@@ -23,5 +23,7 @@ class Picture:
         if new_width == 0 and new_height == 0:
             raise Exception("Must specify new_width or new_height or both.")
         if not fake_rescale:
-            self.pil_image.resize((new_width, new_height))
+            self.pil_image = self.pil_image.resize((new_width, new_height))
+            self.width = new_width
+            self.height = new_height
         return new_width, new_height
