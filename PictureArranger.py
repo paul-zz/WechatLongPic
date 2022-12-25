@@ -50,10 +50,6 @@ class PictureArranger:
         # Insert the middle picture to the nearest position to the center
         # and calculate the distance to the center
         idx_near, center_dist = self.get_nearest_index(pos_array, pos_mid)
-        print(idx_near)
-        print(pos_array)
-        print(pos_array[idx_near])
-        print(center_dist)
         pos_near = pos_array[idx_near]
         pos_array.insert(idx_near, pos_near)
         for index in range(idx_near+1, len(pos_array)):
