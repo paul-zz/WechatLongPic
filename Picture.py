@@ -15,6 +15,7 @@ class Picture:
         self.height = 0
         # Set the font
         self.name_font = ImageFont.load_default()
+        self.name_color = "white"
     
     def set_name_font(self, font_name : str, font_size : int):
         # Set the font and font size of the name on each image
@@ -28,6 +29,7 @@ class Picture:
         self.pil_image = Image.open(self.file_dir)
         self.width = self.pil_image.width
         self.height = self.pil_image.height
+        self.pic_name = file_dir.split(os.sep)[-1]
         # If the image mode is not RGB, convert it
         if self.pil_image.mode != "RGB":
             self.pil_image = self.pil_image.convert("RGB")
@@ -51,7 +53,11 @@ class Picture:
         return new_width, new_height
 
     def draw_image_name(self):
-        pass
+        draw = ImageDraw.Draw(self.pil_image)
+        pic_name_size = draw.textsize(self.pic_name, self.name_font)
+        # TODO: Add option for the position of name text
+        draw.rectangle((0, 0, pic_name_size[0], pic_name_size[1]), "black")
+        draw.text((0, 0), self.pic_name, self.name_color, font=self.name_font)
 
     def show_image(self):
         # Show the image in PIL window, for debugging
