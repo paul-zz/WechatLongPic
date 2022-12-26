@@ -3,7 +3,11 @@
 使用该脚本可生成发布微信朋友圈九宫格时，显示指定缩略图的长图。利用的是微信朋友圈图像长图的缩略图裁剪正中的特性。
 ![效果展示](./img/demo.png)
 ## 使用方法
-Clone本项目至本地，在脚本所在目录中启动终端，运行
+本项目依赖Pillow库，请先将其安装在Python环境中
+```
+pip install Pillow
+```
+之后Clone本项目至本地，在脚本所在目录中启动终端，运行
 ```
 python main.py <directory/of/config.yml>
 ```
