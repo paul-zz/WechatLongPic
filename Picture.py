@@ -35,3 +35,7 @@ class Picture:
             self.width = new_width
             self.height = new_height
         return new_width, new_height
+
+    def show_image(self):
+        # Show the image in PIL window, for debugging
+        self.pil_image.show()
