@@ -19,6 +19,12 @@ class MiddlePicture(Picture):
         self.subtitle_color = "black"
         self.caption_offset = 0
         
+    def set_background_alpha(self, alpha : float):
+        self.background_alpha = alpha
+        
+    def set_background_color(self, color : str):
+        self.background_color = color
+
     def set_caption_font(self, font_name : str, font_size : int):
         # Set the font and font size of the caption
         self.caption_font = ImageFont.truetype(font_name, font_size)
