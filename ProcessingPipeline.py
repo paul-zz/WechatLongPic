@@ -9,7 +9,7 @@ class ProcessingPipeline:
         self.config_dict = None
 
     def read_config(self):
-        with open('sample_config.yml', 'r') as file:
+        with open(self.config_dir, 'r') as file:
             config_yaml = yaml.safe_load(file)
         self.config_dict = config_yaml
     
@@ -41,8 +41,3 @@ class ProcessingPipeline:
         pic_arranger.generate_image()
         pic_arranger.save_output(self.config_dict["output"])
         pic_arranger.output_img.show()
-
-if __name__ == "__main__":
-    pipeline = ProcessingPipeline("sample_config.yml")
-    pipeline.read_config()
-    pipeline.process()

@@ -7,6 +7,7 @@ from ProcessingPipeline import ProcessingPipeline
 if __name__ == "__main__":
     try:
         config_dir = sys.argv[1]
+        print(config_dir)
         pipeline = ProcessingPipeline(config_dir)
         pipeline.read_config()
         pipeline.process()
