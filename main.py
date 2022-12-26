@@ -15,6 +15,8 @@ if __name__ == "__main__":
     for dir in pic_dirs:
         pic = Picture()
         pic.load_image(dir)
+        pic.set_name_font("msyh", 20)
+        pic.set_pic_name("AFOIE-呵呵呵")
         pic_arranger.add_picture(pic)
     # center_pic = Picture()
     # center_pic.load_image(center_dir)
