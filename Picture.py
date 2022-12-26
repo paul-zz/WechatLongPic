@@ -16,11 +16,18 @@ class Picture:
         # Set the font
         self.name_font = ImageFont.load_default()
         self.name_color = "white"
+        self.name_bg_color = "black"
     
     def set_name_font(self, font_name : str, font_size : int):
         # Set the font and font size of the name on each image
         self.name_font = ImageFont.truetype(font_name, font_size)
 
+    def set_name_color(self, color : str):
+        self.name_color = color
+
+    def set_name_bg_color(self, color : str):
+        self.name_bg_color = color
+        
     def set_pic_name(self, name : str):
         self.pic_name = name
 
@@ -56,7 +63,7 @@ class Picture:
         draw = ImageDraw.Draw(self.pil_image)
         pic_name_size = draw.textsize(self.pic_name, self.name_font)
         # TODO: Add option for the position of name text
-        draw.rectangle((0, 0, pic_name_size[0], pic_name_size[1]), "black")
+        draw.rectangle((0, 0, pic_name_size[0], pic_name_size[1]), self.name_bg_color)
         draw.text((0, 0), self.pic_name, self.name_color, font=self.name_font)
 
     def show_image(self):
