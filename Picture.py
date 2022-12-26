@@ -1,5 +1,7 @@
 import os
 from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
 
 class Picture:
     def __init__(self):
@@ -11,7 +13,16 @@ class Picture:
         self.pil_image = None
         self.width = 0
         self.height = 0
+        # Set the font
+        self.name_font = ImageFont.load_default()
     
+    def set_name_font(self, font_name : str, font_size : int):
+        # Set the font and font size of the name on each image
+        self.name_font = ImageFont.truetype(font_name, font_size)
+
+    def set_pic_name(self, name : str):
+        self.pic_name = name
+
     def load_image(self, file_dir : str):
         self.file_dir = file_dir
         self.pil_image = Image.open(self.file_dir)
@@ -38,6 +49,9 @@ class Picture:
             self.width = new_width
             self.height = new_height
         return new_width, new_height
+
+    def draw_image_name(self):
+        pass
 
     def show_image(self):
         # Show the image in PIL window, for debugging
