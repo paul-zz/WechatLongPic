@@ -40,6 +40,7 @@ class ProcessingPipeline:
         pic_arranger.set_output_width(self.config_dict["output_width"])
         pic_arranger.generate_image()
         pic_arranger.save_output(self.config_dict["output"])
+        pic_arranger.output_img.show()
 
 if __name__ == "__main__":
     pipeline = ProcessingPipeline("sample_config.yml")
