@@ -71,6 +71,9 @@ class PictureArranger:
         for index in range(0, len(pics_to_paste)):
             pic_to_paste = pics_to_paste[index]
             pic_to_paste.rescale(new_width=self.output_width)
+            if index != idx_near:
+                # If the picture is not the center picture, draw its name
+                pic_to_paste.draw_image_name()        
             output_img.paste(pic_to_paste.pil_image, (0, pos_array[index]))
         self.output_img = output_img
 
