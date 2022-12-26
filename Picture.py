@@ -17,6 +17,9 @@ class Picture:
         self.pil_image = Image.open(self.file_dir)
         self.width = self.pil_image.width
         self.height = self.pil_image.height
+        # If the image mode is not RGB, convert it
+        if self.pil_image.mode != "RGB":
+            self.pil_image = self.pil_image.convert("RGB")
 
     def rescale(self, new_width : int=0, new_height : int=0, fake_rescale=False):
         # Rescale the picture
