@@ -7,12 +7,16 @@ class PictureArranger:
         self.output_width = 0
         self.mid_pic = None
         self.output_img = None
+        self.filling_color = "white"
 
     def add_picture(self, pic: Picture):
         self.picture_array.append(pic)
 
     def set_mid_pic(self, pic:Picture):
         self.mid_pic = pic
+
+    def set_filling_color(self, color : str):
+        self.filling_color = color
 
     def set_output_width(self, output_width: int):
         self.output_width = output_width
@@ -56,7 +60,7 @@ class PictureArranger:
             pos_array[index] += mid_pic_height
         # Adjust other pictures to ensure the middle picture is centered and output
         # Create a blank image on which paste all the pictures
-        output_img = Image.new("RGB", (self.output_width, height + mid_pic_height + 2*abs(center_dist)))
+        output_img = Image.new("RGB", (self.output_width, height + mid_pic_height + 2*abs(center_dist)), self.filling_color)
         # If the middle picture is too high, move all pictures to below
         if center_dist < 0:
             for index in range(0, len(pos_array)):
