@@ -9,7 +9,7 @@ class ProcessingPipeline:
         self.config_dict = None
 
     def read_config(self):
-        with open(self.config_dir, 'r') as file:
+        with open(self.config_dir, 'r', encoding="UTF-8") as file:
             config_yaml = yaml.safe_load(file)
         self.config_dict = config_yaml
     
