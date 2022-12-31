@@ -1,5 +1,6 @@
 import os
 from PIL import Image
+from PIL import ImageOps
 from PIL import ImageFont
 from PIL import ImageDraw
 
@@ -34,12 +35,14 @@ class Picture:
     def load_image(self, file_dir : str):
         self.file_dir = file_dir
         self.pil_image = Image.open(self.file_dir)
+        self.pil_image = ImageOps.exif_transpose(self.pil_image)
         self.width = self.pil_image.width
         self.height = self.pil_image.height
         self.pic_name = file_dir.split(os.sep)[-1]
         # If the image mode is not RGB, convert it
         if self.pil_image.mode != "RGB":
             self.pil_image = self.pil_image.convert("RGB")
+        
 
     def rescale(self, new_width : int=0, new_height : int=0, fake_rescale=False):
         # Rescale the picture
