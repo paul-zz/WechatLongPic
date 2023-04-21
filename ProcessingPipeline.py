@@ -1,6 +1,6 @@
 import yaml
 from PictureArranger import PictureArranger
-from Picture import Picture
+from Picture import Picture, PictureSH
 from MiddlePicture import MiddlePicture
 
 class ProcessingPipeline:
@@ -11,11 +11,24 @@ class ProcessingPipeline:
     def read_config(self):
         with open(self.config_dir, 'r', encoding="UTF-8") as file:
             config_yaml = yaml.safe_load(file)
-        self.config_dict = config_yaml
+        self.config_dict = config_yaml\
     
-    def process(self):
-        if self.config_dict == None:
-            raise Exception("Please read config file first.")
+    def process_secondhand(self):
+        pic_arranger = PictureArranger()
+        for index in range(0, len(self.config_dict["pictures"])):
+            pic = PictureSH()
+            pic.load_image(self.config_dict["pictures"][index])
+            pic.set_name_font(self.config_dict["others"]["name_font"], self.config_dict["others"]["name_fontsize"])
+            pic.set_price_font(self.config_dict["others"]["price_font"], self.config_dict["others"]["price_fontsize"])
+            pic.set_pic_name(self.config_dict["names"][index])
+            pic.set_pic_name_eng(self.config_dict["names_eng"][index])
+            pic.set_price(self.config_dict["prices"][index])
+            pic_arranger.add_picture(pic)
+        pic_arranger.set_output_width(self.config_dict["output_width"])
+        pic_arranger.generate_image(type="secondhand")
+        pic_arranger.save_output(self.config_dict["output"])
+
+    def process_wechat(self):
         pic_arranger = PictureArranger()
         for index in range(0, len(self.config_dict["pictures"])):
             pic = Picture()
@@ -40,3 +53,17 @@ class ProcessingPipeline:
         pic_arranger.set_output_width(self.config_dict["output_width"])
         pic_arranger.generate_image()
         pic_arranger.save_output(self.config_dict["output"])
+
+    def process(self):
+        if self.config_dict == None:
+            raise Exception("Please read config file first.")
+        if "type" in self.config_dict:
+            type = self.config_dict["type"]
+        else:
+            type = "wechat"
+        
+        if type == "wechat":
+            self.process_wechat()
+        elif type == "secondhand":
+            self.process_secondhand()
+

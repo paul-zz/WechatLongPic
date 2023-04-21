@@ -31,9 +31,33 @@ class PictureArranger:
                 min_idx = index
         return min_idx, min_dist
 
+    def generate_image_secondhand(self):
+        # Generate output picture for secondhand pic with prices
+        if self.output_width == 0:
+            raise Exception("Please specify the width of output picture.")
+        # Calculating overall height
+        # Height is currently not including the middle picture
+        height = 0
+        # The array to store the Y coordinate of the top of each picture
+        # Starting from zero
+        pos_array = []
+        for pic in self.picture_array:
+            pos_array.append(height)
+            _, pic_rescaled_height = pic.rescale(new_width=self.output_width, fake_rescale=True)
+            height += pic_rescaled_height
 
-    def generate_image(self):
-        # Generate output picture
+        # Create a blank image on which paste all the pictures
+        output_img = Image.new("RGB", (self.output_width, height), self.filling_color)
+        pics_to_paste = self.picture_array.copy()
+        for index in range(0, len(pics_to_paste)):
+            pic_to_paste = pics_to_paste[index]
+            pic_to_paste.rescale(new_width=self.output_width)
+            pic_to_paste.draw_image_name()        
+            output_img.paste(pic_to_paste.pil_image, (0, pos_array[index]))
+        self.output_img = output_img
+
+    def generate_image_wechat(self):
+        # Generate output picture for wechat long pic
         if self.output_width == 0:
             raise Exception("Please specify the width of output picture.")
         if self.mid_pic == None:
@@ -76,6 +100,12 @@ class PictureArranger:
                 pic_to_paste.draw_image_name()        
             output_img.paste(pic_to_paste.pil_image, (0, pos_array[index]))
         self.output_img = output_img
+
+    def generate_image(self, type="wechat"):
+        if type=="wechat":
+            self.generate_image_wechat()
+        elif type=="secondhand":
+            self.generate_image_secondhand()
 
     def save_output(self, save_dir):
         self.output_img.save(save_dir)

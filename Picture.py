@@ -72,3 +72,44 @@ class Picture:
     def show_image(self):
         # Show the image in PIL window, for debugging
         self.pil_image.show()
+
+class PictureSH(Picture):
+    def __init__(self):
+        super().__init__()
+        # The English Name and price info
+        self.pic_name_eng = None
+        self.pic_price = None
+        # Set the font (currently the English name shares the same font with the Chinese name)
+        self.price_font = ImageFont.load_default()
+        self.price_color = "white"
+        self.price_bg_color = "red"
+    
+    def set_price_font(self, font_name : str, font_size : int):
+        self.price_font = ImageFont.truetype(font_name, font_size)
+
+    def set_price_bg_color(self, color : str):
+        self.price_bg_color = color
+
+    def set_price_color(self, color : str):
+        self.price_color = color
+        
+    def set_pic_name_eng(self, name : str):
+        self.pic_name_eng = name
+    
+    def set_price(self, price : str):
+        self.pic_price = price
+
+    def draw_image_name(self):
+        draw = ImageDraw.Draw(self.pil_image)
+        pic_name_size = draw.textsize(self.pic_name, self.name_font)
+        pic_name_eng_size = draw.textsize(self.pic_name_eng, self.name_font)
+        pic_price_size = draw.textsize(self.pic_price, self.price_font)
+        # Draw Chinese name
+        draw.rectangle((0, 0, pic_name_size[0], pic_name_size[1]), self.name_bg_color)
+        draw.text((0, 0), self.pic_name, self.name_color, font=self.name_font)
+        # Draw English name
+        draw.rectangle((0, pic_name_size[1], pic_name_eng_size[0], pic_name_size[1]+pic_name_eng_size[1]), self.name_bg_color)
+        draw.text((0, pic_name_size[1]), self.pic_name_eng, self.name_color, font=self.name_font)
+        # Draw Price
+        draw.rectangle((self.width-pic_price_size[0], 0, self.width, pic_price_size[1]), self.price_bg_color)
+        draw.text((self.width-pic_price_size[0], 0), self.pic_price, self.price_color, font=self.price_font)
