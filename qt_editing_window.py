@@ -79,6 +79,7 @@ class ImgListWidget(QListWidget):
         super().__init__()
         self.setDragDropMode(QAbstractItemView.DragDrop)
         self.setDefaultDropAction(Qt.MoveAction)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
     def addImageItem(self, image_item : ImgListItem):
         item = QListWidgetItem()
