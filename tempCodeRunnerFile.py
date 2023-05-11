@@ -1,2 +1,3 @@
-        # self.layout.addWidget(self.tabs)
-        # self.setLayout(self.layout)
+       # if filename:
+        #     new_image = ImgListItem(QPixmap(filename), filename, "Untitled")
+        #     self.image_list.addImageItem(new_image)

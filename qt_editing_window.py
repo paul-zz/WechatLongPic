@@ -1,23 +1,30 @@
 import sys
 import typing
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import QSize, Qt, QUrl
+from PyQt5.QtGui import QIcon, QPixmap, QDesktopServices
 from PyQt5.QtWidgets import (QApplication, 
                              QAction,
                              QToolBar, 
                              QMainWindow, 
+                             QFileDialog,
                              QWidget, 
                              QLabel, 
                              QStatusBar,
                              QListWidget,
                              QAbstractItemView,
                              QLineEdit,
+                             QDockWidget,
+                             QSplitter,
                              QListWidgetItem,
                              QScrollArea,
                              QTabWidget,
                              QVBoxLayout, 
                              QHBoxLayout,
+                             QMessageBox,
                              QPushButton)
+
+developer = "paul-zz"
+version = "0.01b"
 
 class ScrollImage(QScrollArea):
     def __init__(self, image : QPixmap):
@@ -28,6 +35,7 @@ class ScrollImage(QScrollArea):
     
     def setPixmap(self, image : QPixmap):
         self.image_label.setPixmap(image)
+
 
 class AspectLockedLabel(QLabel):
     def __init__(self):
@@ -45,9 +53,11 @@ class AspectLockedLabel(QLabel):
         if self.pixmap!= None:
             self.setPixmap(self.rescaledPixmap())
 
+
 class ImgListItem(QWidget):
     def __init__(self, image : QPixmap, upper_text : str, lower_text : str):
         super().__init__()
+        self.image = image
         self.pic_label = AspectLockedLabel()
         self.upper_label = QLabel()
         self.lower_label = QLabel()
@@ -84,8 +94,10 @@ class ImgListWidget(QListWidget):
     def addImageItem(self, image_item : ImgListItem):
         item = QListWidgetItem()
         item.setSizeHint(QSize(200, 150))
+        item.setData(Qt.UserRole, image_item.image)
         self.addItem(item)
         self.setItemWidget(item, image_item)
+
 
 class ReviewWidget(QTabWidget):
     def __init__(self):
@@ -100,8 +112,8 @@ class ReviewWidget(QTabWidget):
         # Image view tab
         self.test_title = QLabel("Test test test")
         self.tab_imageview.layout = QVBoxLayout()
-        self.image_label_imageview = QLabel()
-        self.image_label_imageview.setPixmap(QPixmap("./resources/images/testimg.png"))
+        self.image_label_imageview = AspectLockedLabel()
+        self.image_label_imageview.setImage(QPixmap("./resources/images/testimg.png"))
         self.button_edit_image = QPushButton("编辑图像")
         self.button_edit_image.setIcon(QIcon("./resources/icons/ruler--pencil.png"))
         
@@ -130,16 +142,35 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PicTools")
+        self.setWindowIcon(QIcon("./resources/icons/image-instagram.png"))
         self.setMinimumSize(QSize(1000, 500))
+
+        # The menu bar
+        menubar = self.menuBar()
+        menu_file = menubar.addMenu("文件")
+        action_open = menu_file.addAction("打开")
+        action_open.setIcon(QIcon("./resources/icons/folder-open-document-text.png"))
+        action_save = menu_file.addAction("保存")
+        action_save.setIcon(QIcon("./resources/icons/disk.png"))
+        action_save.setShortcut("Ctrl+S")
+
+        menu_help = menubar.addMenu("帮助")
+        action_github = menu_help.addAction("访问GitHub")
+        action_github.setIcon(QIcon("./resources/icons/git.png"))
+        action_github.triggered.connect(self.onGotoGithubClick)
+        action_about = menu_help.addAction("关于")
+        action_about.setIcon(QIcon("./resources/icons/information-frame.png"))
+        action_about.triggered.connect(self.onAboutActionClick)
+
 
         # The toolbar
         toolbar = QToolBar("Main Toolbar")
         toolbar.setIconSize(QSize(32, 32))
-        self.addToolBar(toolbar)
+        self.addToolBar(Qt.LeftToolBarArea, toolbar)
 
         # Add image button on the toolbar
         self.add_image_action = QAction(QIcon("./resources/icons/image--plus.png"), "添加图像", self)
-        self.add_image_action.setStatusTip("增加一张图像到拼图中。")
+        self.add_image_action.setStatusTip("从本地读取图像并添加到拼图中。")
         self.add_image_action.triggered.connect(self.onAddImageButtonClick)
         self.del_image_action = QAction(QIcon("./resources/icons/image--minus.png"), "删除图像", self)
         self.del_image_action.setStatusTip("从拼图中删除当前图像。")
@@ -147,51 +178,57 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self.add_image_action)
         toolbar.addAction(self.del_image_action)
 
-
-        # The button to enter individual functions
+        # Left side : an image list
         self.image_list = ImgListWidget()
-        self.image_list.addImageItem(ImgListItem(QPixmap("./sample_pic/1.jpg"), "1.jpg", "the first image"))
-        self.image_list.addImageItem(ImgListItem(QPixmap("./sample_pic/2.jpg"), "2.jpg", "the second image"))
-        self.image_list.addImageItem(ImgListItem(QPixmap("./sample_pic/3.jpg"), "3.jpg", "the third image"))
-        self.image_list.addImageItem(ImgListItem(QPixmap("./sample_pic/4.jpg"), "4.jpg", "the fourth image"))
-        self.image_list.addImageItem(ImgListItem(QPixmap("./sample_pic/center_bg.jpg"), "center.jpg", "the central image"))
+        self.image_list.itemClicked.connect(self.onImageListItemClick)
 
+        # Right side : preview window
+        self.preview_widget = ReviewWidget()
+        self.preview_window = QDockWidget("预览窗口", self)
+        self.preview_window.setWidget(self.preview_widget)
 
-
-
-        # The left side layout
-        layout_left = QVBoxLayout()
-        layout_left.addWidget(self.image_list)
-
-        # The right side layout
-        preview_window = ReviewWidget()
-
-        # The horizontal layout (main of the app)
-        layout_main = QHBoxLayout()
-        layout_main.addLayout(layout_left)
-        layout_main.addWidget(preview_window)
-
-
-        # The container
-        container = QWidget()
-        container.setLayout(layout_main)
-
-        # Set the central widget of the Window
-        self.setCentralWidget(container)
+        # Set central widgete to the image list and add the preview window as dock
+        self.setCentralWidget(self.image_list)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.preview_window)
 
         # Add a status bar
         self.statusBar = QStatusBar(self)
         self.setStatusBar(self.statusBar)
 
     def onAddImageButtonClick(self):
-        print("Click")
+        # Add image from local folder to the list
+        file_info = QFileDialog.getOpenFileNames(self, "选择图片", "./", "图像文件 (*.jpg *.jpeg *.png)")
+        file_names = file_info[0]
+        for filename in file_names:
+            if filename != '':
+                new_image = ImgListItem(QPixmap(filename), filename, "Untitled")
+                self.image_list.addImageItem(new_image)
 
     def onDelImageButtonClick(self):
-        print("Delete")
+        # Delete the current image in the image list
+        current_item = self.image_list.currentItem()
+        self.image_list.takeItem(self.image_list.row(current_item))
+
+    def onImageListItemClick(self):
+        # Refresh the preview window when image clicked
+        current_pixmap = self.image_list.currentItem().data(Qt.UserRole)
+        self.preview_widget.image_label_imageview.setImage(current_pixmap)
+
+    def onGotoGithubClick(self):
+        # Go to the github repository
+        QDesktopServices.openUrl(QUrl("https://github.com/paul-zz/WechatLongPic/"))
+
+    def onAboutActionClick(self):
+        # Show the about dialogue
+        about_dlg = QMessageBox()
+        about_dlg.setWindowIcon(QIcon("./resources/icons/information-frame.png"))
+        about_dlg.setWindowTitle("关于")
+        about_dlg.setText(f"微信朋友圈指定缩略图长图生成器\n开发者: {developer} \n版本: {version}")
+        about_dlg.setIcon(QMessageBox.Information)
+        about_dlg.exec()
+
 
 app = QApplication(sys.argv)
-
 window = MainWindow()
 window.show()
-
 app.exec()
