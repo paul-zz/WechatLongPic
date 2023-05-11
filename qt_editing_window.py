@@ -1,5 +1,4 @@
 import sys
-import typing
 from PyQt5.QtCore import QSize, Qt, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QDesktopServices
 from PyQt5.QtWidgets import (QApplication, 
@@ -22,6 +21,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QHBoxLayout,
                              QMessageBox,
                              QPushButton)
+from Picture import Picture
 
 developer = "paul-zz"
 version = "0.01b"
@@ -57,9 +57,14 @@ class AspectLockedLabel(QLabel):
 class ImgListItem(QWidget):
     def __init__(self, image : QPixmap, upper_text : str, lower_text : str):
         super().__init__()
-        self.image = image
+        self.picture_data = image
         self.pic_label = AspectLockedLabel()
+
         self.upper_label = QLabel()
+        font = self.upper_label.font()
+        font.setBold(True)
+        self.upper_label.setFont(font)
+
         self.lower_label = QLabel()
 
         self.pic_label.setImage(image)
@@ -76,7 +81,7 @@ class ImgListItem(QWidget):
         self.setLayout(self.overall_layout)
 
     def setPixmap(self, image : QPixmap):
-        self.pic_label.setPixmap(QPixmap)
+        self.pic_label.setPixmap(image)
 
     def setUppertext(self, text : str):
         self.upper_label.setText(text)
@@ -91,10 +96,11 @@ class ImgListWidget(QListWidget):
         self.setDefaultDropAction(Qt.MoveAction)
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
-    def addImageItem(self, image_item : ImgListItem):
+    def addImageItem(self, image_item : ImgListItem, data : Picture):
         item = QListWidgetItem()
+        # Attach data to the item
         item.setSizeHint(QSize(200, 150))
-        item.setData(Qt.UserRole, image_item.image)
+        item.setData(Qt.UserRole, data)
         self.addItem(item)
         self.setItemWidget(item, image_item)
 
@@ -162,7 +168,6 @@ class MainWindow(QMainWindow):
         action_about.setIcon(QIcon("./resources/icons/information-frame.png"))
         action_about.triggered.connect(self.onAboutActionClick)
 
-
         # The toolbar
         toolbar = QToolBar("Main Toolbar")
         toolbar.setIconSize(QSize(32, 32))
@@ -180,7 +185,7 @@ class MainWindow(QMainWindow):
 
         # Left side : an image list
         self.image_list = ImgListWidget()
-        self.image_list.itemClicked.connect(self.onImageListItemClick)
+        self.image_list.itemSelectionChanged.connect(self.currentImageItemChanged)
 
         # Right side : preview window
         self.preview_widget = ReviewWidget()
@@ -201,18 +206,24 @@ class MainWindow(QMainWindow):
         file_names = file_info[0]
         for filename in file_names:
             if filename != '':
-                new_image = ImgListItem(QPixmap(filename), filename, "Untitled")
-                self.image_list.addImageItem(new_image)
+                pic_data = Picture()
+                pic_data.load_image(filename)
+                default_name = pic_data.pic_name
+                new_image = ImgListItem(QPixmap(filename), filename, default_name)
+                self.image_list.addImageItem(new_image, pic_data)
 
     def onDelImageButtonClick(self):
         # Delete the current image in the image list
         current_item = self.image_list.currentItem()
         self.image_list.takeItem(self.image_list.row(current_item))
 
-    def onImageListItemClick(self):
+    def currentImageItemChanged(self):
         # Refresh the preview window when image clicked
-        current_pixmap = self.image_list.currentItem().data(Qt.UserRole)
-        self.preview_widget.image_label_imageview.setImage(current_pixmap)
+        current_picture = self.image_list.currentItem().data(Qt.UserRole)
+        preview_image = current_picture.get_Qt_preview_image()
+        picture_name = current_picture.pic_name
+        self.preview_widget.image_label_imageview.setImage(preview_image)
+        self.preview_widget.test_title.setText(picture_name)
 
     def onGotoGithubClick(self):
         # Go to the github repository
