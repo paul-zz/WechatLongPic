@@ -13,13 +13,14 @@ from PyQt5.QtWidgets import (QApplication,
                              QAbstractItemView,
                              QLineEdit,
                              QDockWidget,
-                             QSplitter,
                              QListWidgetItem,
                              QScrollArea,
                              QTabWidget,
                              QVBoxLayout, 
                              QHBoxLayout,
                              QMessageBox,
+                             QInputDialog,
+                             QSplashScreen,
                              QPushButton)
 from Picture import Picture
 
@@ -83,10 +84,10 @@ class ImgListItem(QWidget):
     def setPixmap(self, image : QPixmap):
         self.pic_label.setPixmap(image)
 
-    def setUppertext(self, text : str):
+    def setUpperText(self, text : str):
         self.upper_label.setText(text)
 
-    def setLowertext(self, text : str):
+    def setLowerText(self, text : str):
         self.lower_label.setText(text)
 
 class ImgListWidget(QListWidget):
@@ -116,11 +117,11 @@ class ReviewWidget(QTabWidget):
         self.addTab(self.tab_globalview, "全局预览")
 
         # Image view tab
-        self.test_title = QLabel("Test test test")
+        self.test_title = QLabel("没有图像。")
         self.tab_imageview.layout = QVBoxLayout()
         self.image_label_imageview = AspectLockedLabel()
         self.image_label_imageview.setImage(QPixmap("./resources/images/testimg.png"))
-        self.button_edit_image = QPushButton("编辑图像")
+        self.button_edit_image = QPushButton("编辑字段")
         self.button_edit_image.setIcon(QIcon("./resources/icons/ruler--pencil.png"))
         
         self.tab_imageview.layout.addWidget(self.image_label_imageview)
@@ -129,7 +130,7 @@ class ReviewWidget(QTabWidget):
         self.tab_imageview.setLayout(self.tab_imageview.layout)
 
         # Global view tab
-        self.test_title_global = QLabel("Test test test")
+        self.test_title_global = QLabel("没有图像。")
         self.tab_globalview.layout = QVBoxLayout()
         self.image_label_globalview = ScrollImage(QPixmap("./resources/images/testimg.png"))
         self.button_edit_global = QPushButton("编辑设定")
@@ -185,12 +186,13 @@ class MainWindow(QMainWindow):
 
         # Left side : an image list
         self.image_list = ImgListWidget()
-        self.image_list.itemSelectionChanged.connect(self.currentImageItemChanged)
+        self.image_list.itemSelectionChanged.connect(self.refreshImageView)
 
         # Right side : preview window
         self.preview_widget = ReviewWidget()
         self.preview_window = QDockWidget("预览窗口", self)
         self.preview_window.setWidget(self.preview_widget)
+        self.preview_widget.button_edit_image.clicked.connect(self.onChangeTextButtonClick)
 
         # Set central widgete to the image list and add the preview window as dock
         self.setCentralWidget(self.image_list)
@@ -208,6 +210,7 @@ class MainWindow(QMainWindow):
             if filename != '':
                 pic_data = Picture()
                 pic_data.load_image(filename)
+                pic_data.set_name_font("msyh", 24)
                 default_name = pic_data.pic_name
                 new_image = ImgListItem(QPixmap(filename), filename, default_name)
                 self.image_list.addImageItem(new_image, pic_data)
@@ -217,13 +220,30 @@ class MainWindow(QMainWindow):
         current_item = self.image_list.currentItem()
         self.image_list.takeItem(self.image_list.row(current_item))
 
-    def currentImageItemChanged(self):
+    def refreshImageView(self):
         # Refresh the preview window when image clicked
-        current_picture = self.image_list.currentItem().data(Qt.UserRole)
-        preview_image = current_picture.get_Qt_preview_image()
-        picture_name = current_picture.pic_name
-        self.preview_widget.image_label_imageview.setImage(preview_image)
-        self.preview_widget.test_title.setText(picture_name)
+        current_item = self.image_list.currentItem()
+        if current_item != None:
+            current_picture = current_item.data(Qt.UserRole)
+            preview_image = current_picture.get_Qt_preview_image()
+            picture_name = current_picture.pic_name
+            self.preview_widget.image_label_imageview.setImage(preview_image)
+            self.preview_widget.test_title.setText(picture_name)
+        else:
+            self.preview_widget.image_label_imageview.setImage(QPixmap("./resources/images/testimg.png"))
+            self.preview_widget.test_title.setText("没有图像。")
+
+    def refreshImageItemName(self):
+        # Refresh the preview window when image clicked
+        current_item = self.image_list.currentItem()
+        if current_item != None:
+            current_picture = current_item.data(Qt.UserRole)
+            current_name = current_picture.pic_name
+            current_widget = self.image_list.itemWidget(current_item)
+            current_widget.setLowerText(current_name)
+        else:
+            self.preview_widget.image_label_imageview.setImage(QPixmap("./resources/images/testimg.png"))
+            self.preview_widget.test_title.setText("没有图像。")
 
     def onGotoGithubClick(self):
         # Go to the github repository
@@ -238,8 +258,40 @@ class MainWindow(QMainWindow):
         about_dlg.setIcon(QMessageBox.Information)
         about_dlg.exec()
 
+    def onChangeTextButtonClick(self):
+        # Event when the editing text button is clicked
+        current_item = self.image_list.currentItem()
+        if current_item != None:
+            current_picture = current_item.data(Qt.UserRole)
+            current_text = current_picture.pic_name
+            text, ok = QInputDialog.getText(self, "编辑字段", "图片上的文本：", text=current_text)
+            if ok:
+                # Set text and refresh the review window
+                current_picture.set_pic_name(text)
+                self.refreshImageView()
+                self.refreshImageItemName()
+                
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box.exec()
+        
 
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+
+# Start the app
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    # load a splash screen
+    splash_pixmap = QPixmap("./resources/images/splash.png")
+    splash = QSplashScreen(splash_pixmap)
+    splash.show()
+
+    # load the main window
+    window = MainWindow()
+    window.show()
+
+    # destroy the splash screen
+    splash.destroy()
+
+    # execution
+    app.exec()
