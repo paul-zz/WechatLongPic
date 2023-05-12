@@ -22,6 +22,7 @@ class Picture:
         self.name_bg_color = "black"
         # For previewing
         self.image_preview = None
+        self.image_preview_qt = None
         self.changed = True
     
     def set_name_font(self, font_name : str, font_size : int):
@@ -49,8 +50,8 @@ class Picture:
         self.height = self.processed_image.height
         self.pic_name = file_dir.split(os.sep)[-1]
         # If the image mode is not RGB, convert it
-        if self.processed_image.mode != "RGB":
-            self.processed_image = self.processed_image.convert("RGB")
+        if self.processed_image.mode != "RGBA":
+            self.processed_image = self.processed_image.convert("RGBA")
         # Make a copy to the original image
         self.original_image = self.processed_image.copy()
         
@@ -109,8 +110,9 @@ class Picture:
     def get_Qt_preview_image(self):
         if self.changed:
             self.image_preview = self.draw_image_preview()
+            self.image_preview_qt = self.Image_to_ImageQt(self.image_preview)
             self.changed = False
-        return self.Image_to_ImageQt(self.image_preview)
+        return self.image_preview_qt
 
 class PictureSH(Picture):
     def __init__(self):
