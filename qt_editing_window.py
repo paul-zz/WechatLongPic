@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtCore import QSize, Qt, QUrl
+from PyQt5.QtCore import QSize, Qt, QUrl, QT_VERSION_STR, PYQT_VERSION_STR
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QColor, QDesktopServices
 from PyQt5.QtWidgets import (QApplication, 
                              QAction,
@@ -28,6 +28,10 @@ from Picture import Picture
 
 developer = "paul-zz"
 version = "0.01b"
+py_ver = sys.version
+qt_ver = QT_VERSION_STR
+pyqt_ver = PYQT_VERSION_STR
+
 
 class ScrollImage(QScrollArea):
     def __init__(self, image : QPixmap):
@@ -189,6 +193,9 @@ class MainWindow(QMainWindow):
         action_edit_all_bg = menu_edit.addAction("批量修改背景颜色")
         action_edit_all_bg.setIcon(QIcon("./resources/icons/paint-can.png"))
         action_edit_all_bg.triggered.connect(self.changeAllBgColor)
+        action_clear_all_text = menu_edit.addAction("清空全部文本")
+        action_clear_all_text.setIcon(QIcon("./resources/icons/cross-script.png"))
+        action_clear_all_text.triggered.connect(self.clearAllTexts)
 
         menu_window = menubar.addMenu("窗口")
         self.action_view_preview = menu_window.addAction("预览窗口")
@@ -303,7 +310,7 @@ class MainWindow(QMainWindow):
         about_dlg = QMessageBox()
         about_dlg.setWindowIcon(QIcon("./resources/icons/information-frame.png"))
         about_dlg.setWindowTitle("关于")
-        about_dlg.setText(f"微信朋友圈指定缩略图长图生成器\n开发者: {developer} \n版本: {version}")
+        about_dlg.setText(f"微信朋友圈指定缩略图长图生成器\n\n开发者: {developer} \n版本: {version} \n项目基于PyQt5开发。\nPython版本: {py_ver}\nQt版本: {qt_ver}\nPyQt版本: {pyqt_ver}")
         about_dlg.setIcon(QMessageBox.Information)
         about_dlg.exec()
 
@@ -320,7 +327,7 @@ class MainWindow(QMainWindow):
                 self.refreshImageView(current_item)
                 self.refreshImageItemName(current_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！", parent=self)
             msg_box.exec()
 
     def onSetFontButtonClick(self):
@@ -334,7 +341,7 @@ class MainWindow(QMainWindow):
                 current_picture.set_name_font(font)
                 self.refreshImageView(current_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！", parent=self)
             msg_box.exec()
 
     def onChangeBgColorButtonClick(self):
@@ -347,7 +354,7 @@ class MainWindow(QMainWindow):
                 current_picture.set_name_bg_color(color)
                 self.refreshImageView(current_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！", parent=self)
             msg_box.exec()
 
     def onChangeFgColorButtonClick(self):
@@ -360,7 +367,7 @@ class MainWindow(QMainWindow):
                 current_picture.set_name_color(color)
                 self.refreshImageView(current_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！", parent=self)
             msg_box.exec()
 
     def changeAllTexts(self):
@@ -390,8 +397,26 @@ class MainWindow(QMainWindow):
                         self.refreshImageView(image_item)
                         self.refreshImageItemName(image_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！", parent=self)
             msg_box.exec()
+
+    def clearAllTexts(self):
+        image_items = [self.image_list.item(x) for x in range(self.image_list.count())]
+        item_counts = len(image_items)
+        if item_counts != 0:
+            msg_box = QMessageBox(QMessageBox.Warning, "注意", "确定要清除全部文本吗？", QMessageBox.Yes | QMessageBox.No, self)
+            msg_box.exec()
+            if msg_box.standardButton(msg_box.clickedButton()) == QMessageBox.Yes:
+                for i in range(item_counts):
+                    image_item = image_items[i]
+                    picture = image_item.data(Qt.UserRole)
+                    picture.set_pic_name("")
+                    self.refreshImageView(image_item)
+                    self.refreshImageItemName(image_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！", parent=self)
+            msg_box.exec()
+
     def changeAllFontColor(self):
         image_items = [self.image_list.item(x) for x in range(self.image_list.count())]
         if len(image_items) != 0:
@@ -402,7 +427,7 @@ class MainWindow(QMainWindow):
                     picture.set_name_color(color)
                     self.refreshImageView(image_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！", parent=self)
             msg_box.exec()
 
     def changeAllBgColor(self):
@@ -415,7 +440,7 @@ class MainWindow(QMainWindow):
                     picture.set_name_bg_color(color)
                     self.refreshImageView(image_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！", parent=self)
             msg_box.exec()
 
     def changeAllFont(self):
@@ -428,7 +453,7 @@ class MainWindow(QMainWindow):
                     picture.set_name_font(font)
                     self.refreshImageView(image_item)
         else:
-            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！", parent=self)
             msg_box.exec()
 
 
