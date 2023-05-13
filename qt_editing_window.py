@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import QSize, Qt, QUrl
-from PyQt5.QtGui import QIcon, QPixmap, QDesktopServices
+from PyQt5.QtGui import QIcon, QPixmap, QFont, QColor, QDesktopServices
 from PyQt5.QtWidgets import (QApplication, 
                              QAction,
                              QToolBar, 
@@ -20,6 +20,8 @@ from PyQt5.QtWidgets import (QApplication,
                              QHBoxLayout,
                              QMessageBox,
                              QInputDialog,
+                             QFontDialog,
+                             QColorDialog,
                              QSplashScreen,
                              QPushButton)
 from Picture import Picture
@@ -122,11 +124,24 @@ class ReviewWidget(QTabWidget):
         self.image_label_imageview = AspectLockedLabel()
         self.image_label_imageview.setImage(QPixmap("./resources/images/testimg.png"))
         self.button_edit_image = QPushButton("编辑字段")
+        self.button_edit_image.setStatusTip("编辑图像上显示的文本。")
         self.button_edit_image.setIcon(QIcon("./resources/icons/ruler--pencil.png"))
+        self.button_edit_font = QPushButton("更改字体")
+        self.button_edit_font.setStatusTip("更改图像上文本的字体。")
+        self.button_edit_font.setIcon(QIcon("./resources/icons/document-attribute.png"))
+        self.button_edit_bg_color = QPushButton("背景颜色")
+        self.button_edit_bg_color.setStatusTip("更改图像上文本的背景颜色。")
+        self.button_edit_bg_color.setIcon(QIcon("./resources/icons/paint-can.png"))
+        self.button_edit_fg_color = QPushButton("文本颜色")
+        self.button_edit_fg_color.setStatusTip("更改图像上文本的颜色。")
+        self.button_edit_fg_color.setIcon(QIcon("./resources/icons/palette--pencil.png"))
         
         self.tab_imageview.layout.addWidget(self.image_label_imageview)
         self.tab_imageview.layout.addWidget(self.test_title)
         self.tab_imageview.layout.addWidget(self.button_edit_image)
+        self.tab_imageview.layout.addWidget(self.button_edit_font)
+        self.tab_imageview.layout.addWidget(self.button_edit_bg_color)
+        self.tab_imageview.layout.addWidget(self.button_edit_fg_color)
         self.tab_imageview.setLayout(self.tab_imageview.layout)
 
         # Global view tab
@@ -161,6 +176,26 @@ class MainWindow(QMainWindow):
         action_save.setIcon(QIcon("./resources/icons/disk.png"))
         action_save.setShortcut("Ctrl+S")
 
+        menu_edit = menubar.addMenu("编辑")
+        action_edit_all_text = menu_edit.addAction("批量修改文本")
+        action_edit_all_text.setIcon(QIcon("./resources/icons/ruler--pencil.png"))
+        action_edit_all_text.triggered.connect(self.changeAllTexts)
+        action_edit_all_font = menu_edit.addAction("批量修改字体")
+        action_edit_all_font.setIcon(QIcon("./resources/icons/document-attribute.png"))
+        action_edit_all_font.triggered.connect(self.changeAllFont)
+        action_edit_all_fg = menu_edit.addAction("批量修改文本颜色")
+        action_edit_all_fg.setIcon(QIcon("./resources/icons/palette--pencil.png"))
+        action_edit_all_fg.triggered.connect(self.changeAllFontColor)
+        action_edit_all_bg = menu_edit.addAction("批量修改背景颜色")
+        action_edit_all_bg.setIcon(QIcon("./resources/icons/paint-can.png"))
+        action_edit_all_bg.triggered.connect(self.changeAllBgColor)
+
+        menu_window = menubar.addMenu("窗口")
+        self.action_view_preview = menu_window.addAction("预览窗口")
+        self.action_view_preview.setCheckable(True)
+        self.action_view_preview.setChecked(True)
+        self.action_view_preview.changed.connect(self.viewPreviewWindowChanged)
+
         menu_help = menubar.addMenu("帮助")
         action_github = menu_help.addAction("访问GitHub")
         action_github.setIcon(QIcon("./resources/icons/git.png"))
@@ -186,13 +221,18 @@ class MainWindow(QMainWindow):
 
         # Left side : an image list
         self.image_list = ImgListWidget()
-        self.image_list.itemSelectionChanged.connect(self.refreshImageView)
+        self.image_list.itemSelectionChanged.connect(self.refreshCurrentImageView)
+        self.image_list.itemDoubleClicked.connect(self.onChangeTextButtonClick)
 
         # Right side : preview window
         self.preview_widget = ReviewWidget()
         self.preview_window = QDockWidget("预览窗口", self)
         self.preview_window.setWidget(self.preview_widget)
+        self.preview_window.visibilityChanged.connect(self.previewWindowVisChanged)
         self.preview_widget.button_edit_image.clicked.connect(self.onChangeTextButtonClick)
+        self.preview_widget.button_edit_font.clicked.connect(self.onSetFontButtonClick)
+        self.preview_widget.button_edit_bg_color.clicked.connect(self.onChangeBgColorButtonClick)
+        self.preview_widget.button_edit_fg_color.clicked.connect(self.onChangeFgColorButtonClick)
 
         # Set central widgete to the image list and add the preview window as dock
         self.setCentralWidget(self.image_list)
@@ -210,7 +250,7 @@ class MainWindow(QMainWindow):
             if filename != '':
                 pic_data = Picture()
                 pic_data.load_image(filename)
-                pic_data.set_name_font("msyh", 24)
+                pic_data.set_name_font(QFont("msyh", 24))
                 default_name = pic_data.pic_name
                 new_image = ImgListItem(QPixmap(filename), filename, default_name)
                 self.image_list.addImageItem(new_image, pic_data)
@@ -220,11 +260,13 @@ class MainWindow(QMainWindow):
         current_item = self.image_list.currentItem()
         self.image_list.takeItem(self.image_list.row(current_item))
 
-    def refreshImageView(self):
+    def refreshCurrentImageView(self):
+        self.refreshImageView(self.image_list.currentItem())
+
+    def refreshImageView(self, item : QListWidgetItem):
         # Refresh the preview window when image clicked
-        current_item = self.image_list.currentItem()
-        if current_item != None:
-            current_picture = current_item.data(Qt.UserRole)
+        if item != None:
+            current_picture = item.data(Qt.UserRole)
             preview_image = current_picture.get_Qt_preview_image()
             picture_name = current_picture.pic_name
             self.preview_widget.image_label_imageview.setImage(preview_image)
@@ -233,17 +275,24 @@ class MainWindow(QMainWindow):
             self.preview_widget.image_label_imageview.setImage(QPixmap("./resources/images/testimg.png"))
             self.preview_widget.test_title.setText("没有图像。")
 
-    def refreshImageItemName(self):
+    def refreshImageItemName(self, item : QListWidgetItem):
         # Refresh the preview window when image clicked
-        current_item = self.image_list.currentItem()
-        if current_item != None:
-            current_picture = current_item.data(Qt.UserRole)
+        if item != None:
+            current_picture = item.data(Qt.UserRole)
             current_name = current_picture.pic_name
-            current_widget = self.image_list.itemWidget(current_item)
+            current_widget = self.image_list.itemWidget(item)
             current_widget.setLowerText(current_name)
         else:
             self.preview_widget.image_label_imageview.setImage(QPixmap("./resources/images/testimg.png"))
             self.preview_widget.test_title.setText("没有图像。")
+
+    def viewPreviewWindowChanged(self):
+        vis = self.action_view_preview.isChecked()
+        self.preview_window.setVisible(vis)
+
+    def previewWindowVisChanged(self):
+        vis = self.preview_window.isVisible()
+        self.action_view_preview.setChecked(vis)
 
     def onGotoGithubClick(self):
         # Go to the github repository
@@ -268,15 +317,122 @@ class MainWindow(QMainWindow):
             if ok:
                 # Set text and refresh the review window
                 current_picture.set_pic_name(text)
-                self.refreshImageView()
-                self.refreshImageItemName()
-                
+                self.refreshImageView(current_item)
+                self.refreshImageItemName(current_item)
         else:
             msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
             msg_box.exec()
+
+    def onSetFontButtonClick(self):
+        current_item = self.image_list.currentItem()
+        if current_item != None:
+            current_picture = current_item.data(Qt.UserRole)
+            current_font = current_picture.name_font
+            font, ok = QFontDialog.getFont(current_font, self, "选择字体")
+            if ok:
+                # Set text and refresh the review window
+                current_picture.set_name_font(font)
+                self.refreshImageView(current_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box.exec()
+
+    def onChangeBgColorButtonClick(self):
+        current_item = self.image_list.currentItem()
+        if current_item != None:
+            current_picture = current_item.data(Qt.UserRole)
+            current_color = current_picture.name_bg_color
+            color = QColorDialog.getColor(current_color, self, "选择背景颜色")
+            if QColor.isValid(color):
+                current_picture.set_name_bg_color(color)
+                self.refreshImageView(current_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box.exec()
+
+    def onChangeFgColorButtonClick(self):
+        current_item = self.image_list.currentItem()
+        if current_item != None:
+            current_picture = current_item.data(Qt.UserRole)
+            current_color = current_picture.name_color
+            color = QColorDialog.getColor(current_color, self, "选择背景颜色")
+            if QColor.isValid(color):
+                current_picture.set_name_color(color)
+                self.refreshImageView(current_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选中图像！")
+            msg_box.exec()
+
+    def changeAllTexts(self):
+        image_items = [self.image_list.item(x) for x in range(self.image_list.count())]
+        item_counts = len(image_items)
+        if item_counts != 0:
+            all_texts = [item.data(Qt.UserRole).pic_name for item in image_items]
+            text_concat = "\n".join(all_texts)
+            texts, ok = QInputDialog.getMultiLineText(self, "批量修改文本", "输入修改后的文本，以回车分割", text_concat)
+            if ok:
+                text_list = texts.split("\n")
+                abandon = False
+                while len(text_list) != item_counts:
+                    msg_box = QMessageBox(QMessageBox.Warning, "警告", "文本行数与图像数不一致。")
+                    msg_box.exec()
+                    texts, ok = QInputDialog.getMultiLineText(self, "批量修改文本", "输入修改后的文本，以回车分割", texts)
+                    if ok:
+                        text_list = texts.split("\n")
+                    else:
+                        abandon = True
+                        break
+                if not abandon:
+                    for i in range(item_counts):
+                        image_item = image_items[i]
+                        picture = image_item.data(Qt.UserRole)
+                        picture.set_pic_name(text_list[i])
+                        self.refreshImageView(image_item)
+                        self.refreshImageItemName(image_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box.exec()
+    def changeAllFontColor(self):
+        image_items = [self.image_list.item(x) for x in range(self.image_list.count())]
+        if len(image_items) != 0:
+            color = QColorDialog.getColor(QColor(), self, "选择背景颜色")
+            if QColor.isValid(color):
+                for image_item in image_items:
+                    picture = image_item.data(Qt.UserRole)
+                    picture.set_name_color(color)
+                    self.refreshImageView(image_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box.exec()
+
+    def changeAllBgColor(self):
+        image_items = [self.image_list.item(x) for x in range(self.image_list.count())]
+        if len(image_items) != 0:
+            color = QColorDialog.getColor(QColor(), self, "选择背景颜色")
+            if QColor.isValid(color):
+                for image_item in image_items:
+                    picture = image_item.data(Qt.UserRole)
+                    picture.set_name_bg_color(color)
+                    self.refreshImageView(image_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box.exec()
+
+    def changeAllFont(self):
+        image_items = [self.image_list.item(x) for x in range(self.image_list.count())]
+        if len(image_items) != 0:
+            font, ok = QFontDialog.getFont(QFont(), self, "选择字体")
+            if ok:
+                for image_item in image_items:
+                    picture = image_item.data(Qt.UserRole)
+                    picture.set_name_font(font)
+                    self.refreshImageView(image_item)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "列表中没有图像！")
+            msg_box.exec()
+
+
         
-
-
 # Start the app
 if __name__ == "__main__":
     app = QApplication(sys.argv)
