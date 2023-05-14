@@ -1,10 +1,9 @@
-import os, io
+import os
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QFont, QColor
+from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtGui import QPixmap, QPainter, QFont, QColor
 
 class Picture:
-    # TODO: rewrite with QPixmap and QPainter
     def __init__(self):
         # The file directory to store the picture
         self.file_dir = None
@@ -67,10 +66,16 @@ class Picture:
         if new_width == 0 and new_height == 0:
             raise Exception("Must specify new_width or new_height or both.")
         if not fake_rescale:
-            self.processed_image = self.processed_image.scaled(new_width, new_height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.processed_image = self.original_image.scaled(new_width, new_height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.width = new_width
             self.height = new_height
         return new_width, new_height
+    
+    def crop(self, image : QPixmap, crop_rect : QRect):
+        # Crop the image using the crop_rect
+        cropped = image.copy(crop_rect)
+        return cropped
+
 
     def draw_name_on(self, image : QPixmap):
         draw = QPainter(image)
@@ -80,6 +85,7 @@ class Picture:
         draw.setPen(self.name_color)
         draw.drawText(0, 0, text_bound.width(), text_bound.height(), Qt.AlignLeft, self.pic_name)
         draw.end()
+        return image
         
 
     def draw_image_name(self):
@@ -89,14 +95,14 @@ class Picture:
     def draw_image_preview(self):
         # Draw preview
         image_preview = self.original_image.copy()
-        self.draw_name_on(image_preview)
+        image_preview = self.draw_name_on(image_preview)
         return image_preview
     
     def get_Qt_Image(self):
         return self.processed_image
     
     def get_Qt_preview_image(self):
-        if self.changed:
+        if self.changed or self.image_preview==None:
             self.image_preview = self.draw_image_preview()
             self.changed = False
         return self.image_preview
