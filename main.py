@@ -32,7 +32,7 @@ from Configurator import Configurator
 from PictureArranger import PictureArranger
 
 developer = "paul-zz"
-version = "0.01a"
+version = "0.01b"
 py_ver = sys.version
 qt_ver = QT_VERSION_STR
 pyqt_ver = PYQT_VERSION_STR
@@ -177,13 +177,26 @@ class ReviewWidget(QTabWidget):
         self.button_cancel_central.setStatusTip("取消使用封面图像及指定缩略图特性。")
         self.button_cancel_central.setIcon(QIcon("./resources/icons/minus.png"))
         self.button_cancel_central.setVisible(False)
+        self.button_nine_split = QPushButton("九宫格切分")
+        self.button_nine_split.setStatusTip("将当前封面图像划分为九宫格。")
+        self.button_nine_split.setIcon(QIcon("./resources/icons/scissors.png"))
+        self.button_enable_edit = QPushButton("启用编辑")
+        self.button_enable_edit.setStatusTip("编辑封面图像上显示的文本。")
+        self.button_enable_edit.setIcon(QIcon("./resources/icons/pencil.png"))
+        hbox_central_text = QHBoxLayout()
+        self.button_cancel_edit = QPushButton("禁用编辑")
+        self.button_cancel_edit.setStatusTip("直接使用原图作为封面图像。")
+        self.button_cancel_edit.setIcon(QIcon("./resources/icons/prohibition.png"))
+        self.button_cancel_edit.setVisible(False)
         hbox_central_text = QHBoxLayout()
         self.button_edit_caption = QPushButton("编辑主标题")
         self.button_edit_caption.setStatusTip("编辑封面图像上的标题。")
         self.button_edit_caption.setIcon(QIcon("./resources/icons/ruler--pencil.png"))
+        self.button_edit_caption.setVisible(False)
         self.button_edit_subtitle = QPushButton("编辑副标题")
         self.button_edit_subtitle.setStatusTip("编辑封面图像上的副标题。")
         self.button_edit_subtitle.setIcon(QIcon("./resources/icons/ruler--pencil.png"))
+        self.button_edit_subtitle.setVisible(False)
         hbox_central_text.addWidget(self.button_edit_caption)
         hbox_central_text.addWidget(self.button_edit_subtitle)
 
@@ -191,9 +204,11 @@ class ReviewWidget(QTabWidget):
         self.button_edit_caption_font = QPushButton("主标题字体")
         self.button_edit_caption_font.setStatusTip("更改封面图像标题的字体。")
         self.button_edit_caption_font.setIcon(QIcon("./resources/icons/document-attribute.png"))
+        self.button_edit_caption_font.setVisible(False)
         self.button_edit_subtitle_font = QPushButton("副标题字体")
         self.button_edit_subtitle_font.setStatusTip("更改封面图像副标题的字体。")
         self.button_edit_subtitle_font.setIcon(QIcon("./resources/icons/document-attribute.png"))
+        self.button_edit_subtitle_font.setVisible(False)
         hbox_central_font.addWidget(self.button_edit_caption_font)
         hbox_central_font.addWidget(self.button_edit_subtitle_font)
 
@@ -201,20 +216,26 @@ class ReviewWidget(QTabWidget):
         self.button_edit_caption_color = QPushButton("主标题颜色")
         self.button_edit_caption_color.setStatusTip("更改封面图像标题的颜色。")
         self.button_edit_caption_color.setIcon(QIcon("./resources/icons/palette--pencil.png"))
+        self.button_edit_caption_color.setVisible(False)
         self.button_edit_subtitle_color = QPushButton("副标题颜色")
         self.button_edit_subtitle_color.setStatusTip("更改封面图像副标题的颜色。")
         self.button_edit_subtitle_color.setIcon(QIcon("./resources/icons/palette--pencil.png"))
+        self.button_edit_subtitle_color.setVisible(False)
         hbox_central_color.addWidget(self.button_edit_caption_color)
         hbox_central_color.addWidget(self.button_edit_subtitle_color)
 
         self.button_edit_central_bg_color = QPushButton("背景颜色")
         self.button_edit_central_bg_color.setStatusTip("更改封面图像的背景颜色。")
         self.button_edit_central_bg_color.setIcon(QIcon("./resources/icons/paint-can.png"))
+        self.button_edit_central_bg_color.setVisible(False)
 
         self.tab_centralview.layout.addWidget(self.image_label_centralview)
         self.tab_centralview.layout.addWidget(self.test_title_central)
         self.tab_centralview.layout.addWidget(self.button_select_central)
         self.tab_centralview.layout.addWidget(self.button_cancel_central)
+        self.tab_centralview.layout.addWidget(self.button_nine_split)
+        self.tab_centralview.layout.addWidget(self.button_enable_edit)
+        self.tab_centralview.layout.addWidget(self.button_cancel_edit)
         self.tab_centralview.layout.addLayout(hbox_central_text)
         self.tab_centralview.layout.addLayout(hbox_central_font)
         self.tab_centralview.layout.addLayout(hbox_central_color)
@@ -329,6 +350,9 @@ class MainWindow(QMainWindow):
         self.preview_widget.button_edit_fg_color.clicked.connect(self.onChangeFgColorButtonClick)
         self.preview_widget.button_select_central.clicked.connect(self.onSelectCentralButtonClick)
         self.preview_widget.button_cancel_central.clicked.connect(self.onCancelCentralButtonClick)
+        self.preview_widget.button_nine_split.clicked.connect(self.onNineSplitButtonClick)
+        self.preview_widget.button_enable_edit.clicked.connect(self.onEnableEditButtonClick)
+        self.preview_widget.button_cancel_edit.clicked.connect(self.onCancelEditButtonClick)
         self.preview_widget.button_edit_caption.clicked.connect(self.onChangeCaptionButtonClick)
         self.preview_widget.button_edit_caption_font.clicked.connect(self.onChangeCaptionFontClick)
         self.preview_widget.button_edit_caption_color.clicked.connect(self.onChangeCaptionColorButtonClick)
@@ -410,6 +434,15 @@ class MainWindow(QMainWindow):
     def previewWindowVisChanged(self):
         vis = self.preview_window.isVisible()
         self.action_view_preview.setChecked(vis)
+
+    def setEditingButtonsVisible(self, visible : bool):
+        self.preview_widget.button_edit_caption.setVisible(visible)
+        self.preview_widget.button_edit_caption_color.setVisible(visible)
+        self.preview_widget.button_edit_caption_font.setVisible(visible)
+        self.preview_widget.button_edit_subtitle.setVisible(visible)
+        self.preview_widget.button_edit_subtitle_color.setVisible(visible)
+        self.preview_widget.button_edit_subtitle_font.setVisible(visible)
+        self.preview_widget.button_edit_central_bg_color.setVisible(visible)
 
     def onGotoGithubClick(self):
         # Go to the github repository
@@ -501,6 +534,42 @@ class MainWindow(QMainWindow):
         self.refreshCentralImageView()
         self.preview_widget.button_select_central.setVisible(True)
         self.preview_widget.button_cancel_central.setVisible(False)
+
+    def onEnableEditButtonClick(self):
+        if self.configs.midpic != None:
+            self.configs.midpic.set_edit_enabled(True)
+            self.setEditingButtonsVisible(True)
+            self.preview_widget.button_enable_edit.setVisible(False)
+            self.preview_widget.button_cancel_edit.setVisible(True)
+            self.refreshCentralImageView()
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选择图像！", parent=self)
+            msg_box.exec()
+
+    def onCancelEditButtonClick(self):
+        if self.configs.midpic != None:
+            self.configs.midpic.set_edit_enabled(False)
+            self.setEditingButtonsVisible(False)
+            self.preview_widget.button_enable_edit.setVisible(True)
+            self.preview_widget.button_cancel_edit.setVisible(False)
+            self.refreshCentralImageView()
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选择图像！", parent=self)
+            msg_box.exec()
+
+    def onNineSplitButtonClick(self):
+        if self.configs.midpic != None:
+            file_info = QFileDialog.getSaveFileName(self, "保存图片", "./", "图像文件 (*.jpg *.jpeg *.png)")
+            file_name = file_info[0]
+            if file_name != '':
+                image_lst = self.configs.midpic.split_into_nine()
+                file_name_split = file_name.split(".")
+                for i in range(9):
+                    file_out_name = f"{file_name_split[0]}_{str(i)}.{file_name_split[1]}"
+                    image_lst[i].save(file_out_name)
+        else:
+            msg_box = QMessageBox(QMessageBox.Warning, "警告", "没有选择图像！", parent=self)
+            msg_box.exec()
 
     def onChangeCaptionButtonClick(self):
         # Event when the editing text button is clicked
@@ -732,7 +801,7 @@ if __name__ == "__main__":
 
     # load the main window
     window = MainWindow()
-    window.show()
+    window.showMaximized()
 
     # destroy the splash screen
     splash.destroy()

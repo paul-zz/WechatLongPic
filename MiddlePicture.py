@@ -2,7 +2,6 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QFont, QColor
 from Picture import Picture
 
-# TODO: Rewrite using Qt
 class MiddlePicture(Picture):
     # A middle picture is consisted of a background picture
     # a caption and a subtitle 
@@ -18,6 +17,7 @@ class MiddlePicture(Picture):
         self.caption_color = QColor("black")
         self.subtitle_color = QColor("black")
         self.caption_offset = 0
+        self.edit_enabled = False
     
     def set_size(self, size : int):
         self.size = size
@@ -65,6 +65,11 @@ class MiddlePicture(Picture):
         # The caption will be moved by `offset` upwards, 
         # and the subtitle will be moved `offset` downwards
         self.caption_offset = offset
+        self.changed = True
+
+    def set_edit_enabled(self, editable : bool):
+        # Set whether the middle picture is going to be edited
+        self.edit_enabled = editable
         self.changed = True
 
     def automatic_adjust_on(self, image : QPixmap):
@@ -127,24 +132,26 @@ class MiddlePicture(Picture):
     
     def render_image(self):
         self.processed_image = self.automatic_adjust_on(self.original_image)
-        self.processed_image = self.render_image_on(self.processed_image)
+        if self.edit_enabled:
+            self.processed_image = self.render_image_on(self.processed_image)
         self.changed = True
 
     def draw_image_preview(self):
         # Draw preview - overridden
         image_preview = self.original_image.copy()
         image_preview = self.automatic_adjust_on(image_preview)
-        image_preview = self.render_image_on(image_preview)
+        if self.edit_enabled:
+            image_preview = self.render_image_on(image_preview)
         return image_preview
-
-if __name__ == "__main__":
-    # Test scripts
-    mid_pic = MiddlePicture(1024)
-    mid_pic.load_image("D:/Code/Pics/pic2.jpg")
-    mid_pic.automatic_adjust()
-    mid_pic.set_caption_font("msyhbd", 150)
-    mid_pic.set_subtitle_font("msyh", 50)
-    mid_pic.set_caption_offset(25)
-    mid_pic.set_caption_text("标题测试")
-    mid_pic.set_subtitle_text("这个是小标题")
-    mid_pic.render_image()
+    
+    def split_into_nine(self):
+        # TODO: Implement function to split the central picture into 9 pics
+        # Make the image 3 times larger
+        image_to_be_splitted = self.draw_image_preview()
+        image_to_be_splitted = image_to_be_splitted.scaled(3*self.size, 3*self.size)
+        image_splitted_list = []
+        for i in range(3):
+            for j in range(3):
+                image_piece = self.crop(image_to_be_splitted, QRect(j*self.size, i*self.size, self.size, self.size))
+                image_splitted_list.append(image_piece)
+        return image_splitted_list
