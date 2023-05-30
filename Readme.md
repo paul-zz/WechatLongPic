@@ -20,7 +20,7 @@ pip install PyQt5
 ```
 Clone本项目至本地，在脚本所在目录中启动终端，运行
 ```
-python qt_editing_window.py
+python main.py
 ```
 ## 短期更新计划
 1. 兼容旧版本配置文件，提供从配置文件导入功能；
