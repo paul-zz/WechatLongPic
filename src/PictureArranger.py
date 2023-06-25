@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QFont, QColor
-from Picture import Picture
-from MiddlePicture import MiddlePicture
+from src.Picture import Picture
+from src.MiddlePicture import MiddlePicture
 # TODO: Rewrite using QPainter and QPixmap
 class PictureArranger:
     def __init__(self):

@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QFont, QColor
-from Picture import Picture
+from src.Picture import Picture
 
 class MiddlePicture(Picture):
     # A middle picture is consisted of a background picture

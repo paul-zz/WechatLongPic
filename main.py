@@ -26,10 +26,10 @@ from PyQt5.QtWidgets import (QApplication,
                              QColorDialog,
                              QSplashScreen,
                              QPushButton)
-from Picture import Picture
-from MiddlePicture import MiddlePicture
-from Configurator import Configurator
-from PictureArranger import PictureArranger
+from src.Picture import Picture
+from src.MiddlePicture import MiddlePicture
+from src.Configurator import Configurator
+from src.PictureArranger import PictureArranger
 
 developer = "paul-zz"
 version = "0.01b"
